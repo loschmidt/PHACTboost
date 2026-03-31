@@ -100,7 +100,8 @@ position_score <- function(ps, x, msa, human_id, names_all, tr_org, num_nodes, n
       
     } else {
       h_name <- human_id
-      human_codeml <- names_all[grep(pattern = h_name, x = names_all, fixed = TRUE)]
+      #human_codeml <- names_all[grep(pattern = h_name, x = names_all, fixed = TRUE)]
+      human_codeml <- names_all[names_all == h_name]
       leaf_human <- tree_new_info[which(tree_new_info$label == human_codeml), "node"]
       human_plc <- leaf_human
       node_human <- tree_new_info[which(tree_new_info$label == human_codeml), "parent"]
@@ -217,7 +218,7 @@ position_score <- function(ps, x, msa, human_id, names_all, tr_org, num_nodes, n
         
         ### NOVEL 29.03
         aa_f <- position_num[human_plc]
-        if (aa_f != 21) {
+	if (aa_f != 21) {
           vect_human[aa_f]<-0
         }
         

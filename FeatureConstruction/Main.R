@@ -5,9 +5,9 @@ library(stringr)
 library(dplyr)
 library(bio3d)
 library(Peptides)
-source("./compute_PHACT.R")
-source("./compute_input_features.R")
-source("./compute_weight.R")
+source("/opt/FeatureConstruction/compute_PHACT.R")
+source("/opt/FeatureConstruction/compute_input_features.R")
+source("/opt/FeatureConstruction/compute_weight.R")
 
 args = commandArgs(trailingOnly=TRUE)
 
@@ -67,7 +67,8 @@ compute_score <- function(file_nwk, file_rst, file_fasta, file_log, file_iqtree,
   
   # Human position (leaf & node)
   h_name <- human_id
-  human_codeml <- names_all[grep(pattern = h_name, x = names_all, fixed = TRUE)]
+  #human_codeml <- names_all[grep(pattern = h_name, x = names_all, fixed = TRUE)]
+  human_codeml <- names_all[names_all == h_name]
   leaf_human <- tree_info[which(tree_info$label == human_codeml), "node"]
   human_plc <- leaf_human
   node_human <- tree_info[which(tree_info$label == human_codeml), "parent"]
@@ -205,9 +206,10 @@ compute_score <- function(file_nwk, file_rst, file_fasta, file_log, file_iqtree,
   ##########
   
   parameters <- unlist(str_split(parameters, pattern = ","))
-  
+ print("aaaa") 
   score_norm <- t(mapply(function(ps){position_score(ps, x, msa, human_id, names_all, tr_org, num_nodes, num_leaves, tree_info, num_nodes, nodes_raxml, num_leaves, total_pos, human_plc, node_human, nodes_raxml, human_leaf_len, dist_node, dist_leaf, parameters)}, rep(positions)))
   
+ print("bbb") 
   pl <- 1
   scores <- list()
   for (p in 1:length(parameters)) {
@@ -273,8 +275,18 @@ compute_score <- function(file_nwk, file_rst, file_fasta, file_log, file_iqtree,
   optimal_loglikelihood <- as.numeric(str_split(optimal_loglikelihood, ":", simplify = T)[2])
   
   site_prop_rates <- log_file[grep("Site proportion and rates", log_file)]
+  
+#  print(site_prop_rates)
+#  print(gregexpr("(?<=\\().*?(?=\\))", site_prop_rates, perl=T))
+  
   site_prop_rates <- regmatches(site_prop_rates, gregexpr("(?<=\\().*?(?=\\))", site_prop_rates, perl=T))[[1]]
   site_prop_rates <- as.numeric(sapply(site_prop_rates, function(x){str_split(x,",",simplify = T)}))
+#  site_prop_rates <- c(
+#    prop1 = 0.25, rate1 = 1.0,
+#    prop2 = 0.25, rate2 = 1.0,
+#    prop3 = 0.25, rate3 = 1.0,
+#    prop4 = 0.25, rate4 = 1.0
+#  )
   names(site_prop_rates) <- c("prop1", "rate1", "prop2", "rate2", "prop3", "rate3", "prop4", "rate4")
   
   aver_evol_rate <- sum(site_prop_rates[c(1,3,5,7)]*site_prop_rates[c(2,4,6,8)])

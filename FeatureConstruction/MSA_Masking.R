@@ -26,7 +26,8 @@ compute_score <- function(file_fasta, output_name, folder_name) {
   names_all <- row.names(msa)
   
   h_name <- output_name
-  human_codeml <- names_all[grep(pattern = h_name, x = names_all, fixed = TRUE)]
+  human_codeml <- names_all[names_all == h_name]
+  #human_codeml <- names_all[grep(pattern = h_name, x = names_all, fixed = TRUE)]
   
   # Chosen positions (all or some)
   positions <- 1:total_pos
@@ -45,6 +46,8 @@ compute_score <- function(file_fasta, output_name, folder_name) {
     if (i==1){
       vec <- c(vec, trim_msa3)
     }
+    print(human_codeml)
+    print(vec)
     if (is.element(human_codeml, vec)){
       vec <- vec[-which(vec==human_codeml)]
     }

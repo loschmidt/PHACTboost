@@ -10,7 +10,7 @@ codon_info_path <- args[2]
 train_path <- args[3]
 input_features_path <- args[4]
 final_model_path <- args[5]
-
+print(ids)
 for (index in 1:length(ids)){
   id <- ids[index]
 
@@ -19,7 +19,24 @@ for (index in 1:length(ids)){
 
   # Load input features data
   load(sprintf("%s/%s.RData", input_features_path, id))
-  
+
+  drop_cols <- grep("NA\\.[0-9]+", colnames(data))  # look for NA.<number>
+  if (length(drop_cols) > 0) {
+    data <- data[, -drop_cols, drop = FALSE]
+  } else {
+    cat("No matching columns found.\n")
+  }
+
+  na_name_cols <- which(is.na(colnames(data)))
+
+# Drop them
+if (length(na_name_cols) > 0) {
+  data <- data[, -na_name_cols, drop = FALSE]
+  cat("Dropped columns with NA names.\n")
+} else {
+  cat("No NA-named columns found.\n")
+}
+
   add_pos <- matrix(0, length(data$UNIPROTKB), 1)
   add_snp <- matrix(0, length(data$UNIPROTKB), 1)
   
@@ -40,7 +57,7 @@ for (index in 1:length(ids)){
     }
     add_snp[i] <- snp
   }
-  
+  print(snp)
   nSNP <- add_snp
   data <- cbind(data, nSNP)
   data <- cbind(data, add_pos)
@@ -65,6 +82,8 @@ for (index in 1:length(ids)){
   y_test <- all_test$variant_info
   xx2 <- which(colnames(all_test)=="vars")
   X_test <- all_test[, -c(1:4, xx2, grep("SIFT", colnames(all_test)))]
+  print(colnames(X_test))
+  print(!grepl("wol", colnames(X_test)))
   X_test <- X_test[, (!grepl("wol", colnames(X_test)))]
   
   elims <- which(apply(X_train, 2, sd) == 0)
@@ -81,19 +100,20 @@ for (index in 1:length(ids)){
     X_train <- X_train[, selected_cols]
     X_test <- X_test[, selected_cols]
   }
-  
   X_train <- scale(X_train)
-  
   train_center <- attr(X_train, "scaled:center")
   train_scale <- attr(X_train, "scaled:scale")
   
   train_info <- list(center = train_center, scale = train_scale, features = colnames(X_train))
+  print("aaaa")
   save(train_info, file = "train_info.RData")
-  
+  print("cccc")
+  #print(sort(train_info$features))
+  #print(sort(colnames(X_test)))
   X_test <- X_test[,train_info$features]
   X_test <- (X_test - matrix(train_info$center, nrow = nrow(X_test), ncol = ncol(X_test), byrow = TRUE)) / matrix(train_info$scale, nrow = nrow(X_test), ncol = ncol(X_test), byrow = TRUE)
   colnames(X_test) <- train_info$features
-  
+ print("bbb") 
   state <- lgb.load(final_model_path)
   PhactBoost_Scores <- predict(state, as.matrix(X_test), params = list(predict_disable_shape_check=T))
   data <- cbind(PhactBoost_Scores, data)

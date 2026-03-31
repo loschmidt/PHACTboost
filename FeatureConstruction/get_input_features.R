@@ -42,7 +42,8 @@ for (id in ids){
   # Read fasta file, MSA
   fasta <- read.fasta(file = file_fasta)
   msa <- fasta$ali
-  human_seq <- msa[grep(id, row.names(msa)),]
+  #human_seq <- msa[grep(id, row.names(msa)),]
+  human_seq <- msa[row.names(msa) == id, ]
   if (length(which(human_seq=="-"))>=1){
     keep_gaps <- which(human_seq=="-")
   }
@@ -61,7 +62,6 @@ for (id in ids){
   colnames(data) <- c("UNIPROTKB", "Positions", "Ref_AA", "Alt_AA")
   
   data <- as.data.frame(data)
-  
   positions <- as.numeric(data$Positions)
   s1 <- sapply(parameters, function(p){
     scores_wp_wl <- scores[[sprintf("%s_wl_param_%s", id, p)]]
@@ -127,7 +127,6 @@ for (id in ids){
   data[["DiffAA_Trim"]] <- as.vector(ss) 
   
   ################MSA & Blosum Scores
-  
   amino_acids <- c("G", "A", "L", "M", "F", "W", "K", "Q", "E", "S", "P", "V", "I", "C", "Y", "H", "R", "N", "D", "T")
   data("BLOSUM62")
   blosum_mat <- BLOSUM62[amino_acids, amino_acids]
@@ -152,20 +151,42 @@ for (id in ids){
   data <- cbind(data, human_node_probs_alt)
   
   data$delta_h_node_prob <- human_node_probs_ref - human_node_probs_alt
-  
-  el_i <- c()
-  for (p in unique(positions)){
-    if (msa[grep(id, row.names(msa)), p]=="-"){
-      el_i <- c(el_i, which(data$Positions==p))
-    }
-  }
 
-  if (length(el_i) > 0) {
-    positions <- positions[-el_i]
-    data <- data[-el_i, ]
+print(positions)
+print("picakokot")
+el_i <- integer(0)
+for (p in unique(positions)) {
+  #row_index <- grep(id, row.names(msa))
+  row_index <- which(row.names(msa) == id)
+  if (length(row_index) > 0 && msa[row_index, p] == "-") {
+    match_idx <- which(data$Positions == p)
+    if (length(match_idx) > 0) el_i <- c(el_i, match_idx)
   }
-  
-  weighted_node_probs_ref <- t(as.matrix(sapply(1:length(positions), function(p){ml_features[[positions[p]]][["weighted_probs"]][,data[p, "Ref_AA"]]})))
+}
+print(el_i)
+if (length(el_i) > 0) {
+  positions <- positions[-el_i]
+  data <- data[-el_i, ]
+}
+#  el_i <- c()
+#  for (p in unique(positions)){
+#    #if (msa[grep(id, row.names(msa)), p]=="-"){
+#    if (msa[which(row.names(msa) == id), p] == "-"){
+#       el_i <- c(el_i, which(data$Positions==p))
+#    }
+#  }
+#  positions <- positions[-el_i]
+#  data <- data[-el_i,]
+
+#sapply(1:length(positions), function(p) {
+#  print(paste("p:", p))
+#  print(paste("Position:", positions[p]))
+#  print(paste("Ref_AA:", data[p, "Ref_AA"]))
+#  print(colnames(ml_features[[positions[p]]][["weighted_probs"]]))
+#  print(ml_features[[positions[p]]][["weighted_probs"]][, data[p, "Ref_AA"]])
+#})
+weighted_node_probs_ref <- t(as.matrix(sapply(1:length(positions), function(p){ml_features[[positions[p]]][["weighted_probs"]][,data[p, "Ref_AA"]]})))
+print("cdjkjkfsfsdsdf")
   colnames(weighted_node_probs_ref) <- paste0("wp_", c(1:20)*5, "_ref")
   data <- cbind(data, weighted_node_probs_ref)
   
@@ -258,11 +279,9 @@ for (id in ids){
   data$sd_tree_length <- protein_level_features$sd_tree_length
   
   data$total_gap_freq <- protein_level_features$total_gap_freq
-  
   site_prop_rates <- matrix(protein_level_features$site_prop_rates, nrow = nrow(data), ncol = length(protein_level_features$site_prop_rates), byrow = T)
   colnames(site_prop_rates) <- names(protein_level_features$site_prop_rates)
   data <- cbind(data, site_prop_rates)
-  
   data$overall_div <- as.numeric(protein_level_features[8])
   data$aver_evol_rate <- as.numeric(protein_level_features[10])
   data$total_passed <- as.numeric(protein_level_features[11])
@@ -388,14 +407,19 @@ for (id in ids){
         data <- rbind(mat, data)
       } else {
         k <- (keep_gaps[i]-1)*20
+        #print(keep_gaps[i])
+        #print(k)
+        #print(data$Positions[k])
+        #print(data$Positions)
+        #print("aaaaa")
         part1 <- data[1:k,]
         part2 <- data[(k+1):length(data[,1]),]
-        part2[,2] <- as.numeric(part2[,2]) + 1
+        part2[,2] <- as.numeric(part2[,2])
         data <- rbind(part1, mat, part2)
       }
     }
   }
-  
+
   
   save("data", file = sprintf("%s/%s.RData", save_path, id))
 }
