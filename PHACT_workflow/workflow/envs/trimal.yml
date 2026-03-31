@@ -1,5 +1,0 @@
-name: trimal 
-channels:
-  - bioconda
-dependencies:
-  - trimal = 1.4.1 
