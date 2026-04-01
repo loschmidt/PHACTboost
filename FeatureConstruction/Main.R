@@ -5,9 +5,13 @@ library(stringr)
 library(dplyr)
 library(bio3d)
 library(Peptides)
-source("/opt/FeatureConstruction/compute_PHACT.R")
-source("/opt/FeatureConstruction/compute_input_features.R")
-source("/opt/FeatureConstruction/compute_weight.R")
+
+
+script_dir <- dirname(normalizePath(sub("--file=", "", grep("--file=", commandArgs(FALSE), value=TRUE))))
+
+source(file.path(script_dir, "compute_PHACT.R"))
+source(file.path(script_dir, "compute_input_features.R"))
+source(file.path(script_dir, "compute_weight.R"))
 
 args = commandArgs(trailingOnly=TRUE)
 
